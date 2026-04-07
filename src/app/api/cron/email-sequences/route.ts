@@ -2,7 +2,14 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization for Vercel deployment
+let resend: Resend | null = null;
+const getResend = () => {
+    if (!resend && process.env.RESEND_API_KEY) {
+        resend = new Resend(process.env.RESEND_API_KEY);
+    }
+    return resend;
+};
 
 // Called by Vercel Cron: every hour
 // Add to vercel.json: { "crons": [{ "path": "/api/cron/email-sequences", "schedule": "0 * * * *" }] }
@@ -31,6 +38,13 @@ export async function GET(req: Request) {
     });
 
     let sent = 0;
+    const emailClient = getResend();
+
+    // If Resend is not configured, still track progress but don't send
+    if (!emailClient) {
+        console.warn("Resend API key not configured - skipping email sends");
+        return NextResponse.json({ processed: pendingEnrollments.length, sent: 0, skipped: true });
+    }
 
     for (const enrollment of pendingEnrollments) {
         const { sequence, currentStep, email } = enrollment;
@@ -44,7 +58,7 @@ export async function GET(req: Request) {
         }
 
         try {
-            await resend.emails.send({
+            await emailClient.emails.send({
                 from: `${sequence.user.name || "Creator"} <noreply@biopage.store>`,
                 to: email,
                 subject: step.subject,

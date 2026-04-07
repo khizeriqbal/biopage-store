@@ -1,10 +1,27 @@
 import { Resend } from "resend";
 
-if (!process.env.RESEND_API_KEY) {
-    throw new Error("Missing RESEND_API_KEY");
-}
+// Lazy initialization to support serverless deployment
+let resendInstance: Resend | null = null;
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
+const getResend = () => {
+    if (!resendInstance && process.env.RESEND_API_KEY) {
+        resendInstance = new Resend(process.env.RESEND_API_KEY);
+    }
+    return resendInstance;
+};
+
+export const resend = {
+    emails: {
+        send: async (props: any) => {
+            const client = getResend();
+            if (!client) {
+                console.warn("Resend not configured - email not sent");
+                return { id: "skipped" };
+            }
+            return client.emails.send(props);
+        }
+    }
+};
 
 export async function sendOrderConfirm({ email, productName, productUrl, sellerName }: { email: string; productName: string; productUrl: string; sellerName: string }) {
     try {

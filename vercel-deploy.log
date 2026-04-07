@@ -1,0 +1,4 @@
+Retrieving project…
+Deploying khizeriqbals-projects/biopage-store
+Error: Hobby accounts are limited to daily cron jobs. This cron expression (0 * * * *) would run more than once per day. Upgrade to the Pro plan to unlock all Cron Jobs features on Vercel.
+Learn More: https://vercel.link/3Fpeeb1
