@@ -42,38 +42,48 @@ export default function LoginPage() {
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
+        // Clear status if username is too short
         if (username.length < 3) {
             setUsernameStatus("idle");
             return;
         }
 
+        // Show checking state
         setUsernameStatus("checking");
+
+        // Clear any pending timeout
         if (debounceRef.current) clearTimeout(debounceRef.current);
 
+        // Debounce the check
         debounceRef.current = setTimeout(async () => {
             try {
-                const res = await fetch(`/api/user/check-username?username=${encodeURIComponent(username)}`);
+                const response = await fetch(
+                    `/api/user/check-username?username=${encodeURIComponent(username)}`,
+                    { cache: 'no-store' }
+                );
 
-                if (!res.ok) {
-                    console.error("Username check failed:", res.status);
-                    setUsernameStatus("error");
+                if (!response.ok) {
+                    console.warn("Username check returned status:", response.status);
+                    setUsernameStatus("idle"); // Assume available if check fails
                     return;
                 }
 
-                const data = await res.json();
+                const data = await response.json();
 
-                // Handle all cases: available can be true, false, or null
+                // Explicitly check the boolean value
                 if (data.available === true) {
                     setUsernameStatus("available");
                 } else if (data.available === false) {
                     setUsernameStatus("taken");
                 } else {
-                    // If available is null or undefined, assume error
-                    setUsernameStatus("error");
+                    // If response is unclear, default to idle (let signup handle it)
+                    console.warn("Unclear availability response:", data);
+                    setUsernameStatus("idle");
                 }
             } catch (error) {
-                console.error("Username check error:", error);
-                setUsernameStatus("error");
+                console.error("Username check fetch error:", error);
+                // On fetch error, don't block user from trying
+                setUsernameStatus("idle");
             }
         }, 500);
 
