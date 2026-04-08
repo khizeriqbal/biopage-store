@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 // GET: dashboard - get reviews for seller's products
 export async function GET() {
     const session = await auth();

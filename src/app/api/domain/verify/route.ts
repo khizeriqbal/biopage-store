@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import dns from "dns/promises";
 
+export const dynamic = 'force-dynamic';
+
 const CNAME_TARGET = process.env.CNAME_TARGET || "cname.biopage.store";
 
 export async function POST() {
