@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Mail, Calendar, TrendingUp, Lock } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
+
 export const metadata: Metadata = {
     title: "Users | Admin Panel",
 };

@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import PageBuilder from "@/components/builder/PageBuilder";
 import { redirect } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
+
 export default async function CustomizePage() {
     const session = await auth();
     const userId = session?.user?.id;

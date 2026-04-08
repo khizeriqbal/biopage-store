@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Mail, ToggleRight, Calendar, Zap } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
+
 export const metadata: Metadata = {
     title: "Email Sequences | Admin Panel",
 };

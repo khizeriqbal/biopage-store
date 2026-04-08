@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, DollarSign, User, Calendar, CheckCircle2, Clock } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
+
 export const metadata: Metadata = {
     title: "Orders | Admin Panel",
 };

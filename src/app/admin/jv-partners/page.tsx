@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { User } from "lucide-react";
 import { JvPartnersTable } from "@/components/admin/JvPartnersTable";
 
+export const dynamic = 'force-dynamic';
+
+
 export const metadata: Metadata = {
     title: "JV Partners | Admin Panel",
 };

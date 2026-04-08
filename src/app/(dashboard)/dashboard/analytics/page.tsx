@@ -4,6 +4,8 @@ import {
     formatPrice,
     formatCompactNumber
 } from "@/lib/utils";
+
+export const dynamic = 'force-dynamic';
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { ViewsChart } from "@/components/dashboard/ViewsChart";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";

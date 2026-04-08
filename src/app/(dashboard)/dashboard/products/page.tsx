@@ -5,6 +5,9 @@ import { ProductsClient } from "./components/ProductsClient";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = 'force-dynamic';
+
+
 export default async function ProductsPage() {
     const session = await auth();
     const userId = session?.user?.id;

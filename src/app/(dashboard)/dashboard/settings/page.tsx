@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
+export const dynamic = 'force-dynamic';
+
 export default async function SettingsPage() {
     const session = await auth();
     const userId = session?.user?.id;
