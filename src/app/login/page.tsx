@@ -42,19 +42,44 @@ export default function LoginPage() {
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
-        if (username.length < 3) { setUsernameStatus("idle"); return; }
+        if (username.length < 3) {
+            setUsernameStatus("idle");
+            return;
+        }
+
         setUsernameStatus("checking");
         if (debounceRef.current) clearTimeout(debounceRef.current);
+
         debounceRef.current = setTimeout(async () => {
             try {
                 const res = await fetch(`/api/user/check-username?username=${encodeURIComponent(username)}`);
+
+                if (!res.ok) {
+                    console.error("Username check failed:", res.status);
+                    setUsernameStatus("error");
+                    return;
+                }
+
                 const data = await res.json();
-                setUsernameStatus(data.available === true ? "available" : "taken");
-            } catch {
+
+                // Handle all cases: available can be true, false, or null
+                if (data.available === true) {
+                    setUsernameStatus("available");
+                } else if (data.available === false) {
+                    setUsernameStatus("taken");
+                } else {
+                    // If available is null or undefined, assume error
+                    setUsernameStatus("error");
+                }
+            } catch (error) {
+                console.error("Username check error:", error);
                 setUsernameStatus("error");
             }
         }, 500);
-        return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
     }, [username]);
 
     const handleSubmit = async (e: React.FormEvent) => {
