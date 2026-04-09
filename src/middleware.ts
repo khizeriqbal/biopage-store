@@ -22,6 +22,7 @@ export async function middleware(req: NextRequest) {
 
     // Skip internal Next.js paths and API routes
     if (
+        pathname === "/" ||
         pathname.startsWith("/_next") ||
         pathname.startsWith("/api") ||
         pathname.startsWith("/favicon") ||
