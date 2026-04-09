@@ -32,13 +32,14 @@ const SOCIAL_PROOF = [
 
 export default function LoginPage() {
     const router = useRouter();
-    const [mode, setMode] = useState<"login" | "register">("login");
+    const [mode, setMode] = useState<"login" | "register" | "magic-link">("login");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [name, setName] = useState("");
     const [username, setUsername] = useState("");
+    const [magicLinkSent, setMagicLinkSent] = useState(false);
     const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "error">("idle");
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -97,6 +98,20 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
         try {
+            if (mode === "magic-link") {
+                // Send magic link
+                const res = await fetch("/api/auth/magic-link/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Failed to send magic link");
+                setMagicLinkSent(true);
+                toast.success("Magic link sent! Check your email.");
+                return;
+            }
+
             if (mode === "register") {
                 const res = await fetch("/api/auth/register", {
                     method: "POST",
@@ -141,6 +156,7 @@ export default function LoginPage() {
         email && password && password.length >= 6 &&
         username && username.length >= 3 &&
         usernameStatus === "available";
+    const isMagicLinkValid = email && email.includes("@");
 
     return (
         <div className="min-h-screen bg-dark-bg flex selection:bg-brand selection:text-white">
@@ -245,27 +261,41 @@ export default function LoginPage() {
                     </div>
 
                     {/* Mode toggle */}
-                    <div className="flex p-1 rounded-2xl bg-surface-raised/50 border border-border/50 mb-8">
-                        {(["login", "register"] as const).map((m) => (
+                    <div className="flex p-1 rounded-2xl bg-surface-raised/50 border border-border/50 mb-8 gap-1">
+                        {(["login", "register", "magic-link"] as const).map((m) => (
                             <button
                                 key={m}
-                                onClick={() => { setMode(m); setEmail(""); setPassword(""); setUsername(""); setName(""); }}
+                                onClick={() => { setMode(m); setEmail(""); setPassword(""); setUsername(""); setName(""); setMagicLinkSent(false); }}
                                 className={cn(
-                                    "flex-1 py-2.5 rounded-xl text-sm font-bold transition-all duration-300",
+                                    "flex-1 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all duration-300",
                                     mode === m
                                         ? "bg-brand text-white shadow-lg shadow-brand/20"
                                         : "text-muted-foreground hover:text-white"
                                 )}
                             >
-                                {m === "login" ? "Sign In" : "Sign Up"}
+                                {m === "login" ? "Sign In" : m === "register" ? "Sign Up" : "Magic Link"}
                             </button>
                         ))}
                     </div>
 
+                    {/* Magic Link Success Message */}
+                    {mode === "magic-link" && magicLinkSent && (
+                        <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/5 space-y-2">
+                            <p className="text-sm text-green-400 font-semibold">✓ Magic link sent!</p>
+                            <p className="text-xs text-muted-foreground">Check your email for a link to sign in. It expires in 24 hours.</p>
+                            <button
+                                onClick={() => setMagicLinkSent(false)}
+                                className="text-xs text-brand hover:underline"
+                            >
+                                Send another link
+                            </button>
+                        </div>
+                    )}
+
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
 
-                        {mode === "register" && (
+                        {mode === "register" && !magicLinkSent && (
                             <div className="space-y-1.5">
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Full Name</Label>
                                 <div className="relative">
@@ -295,7 +325,7 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        {mode === "register" && (
+                        {mode === "register" && !magicLinkSent && (
                             <div className="space-y-1.5">
                                 <div className="flex items-center justify-between">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Username</Label>
@@ -362,9 +392,10 @@ export default function LoginPage() {
                                 </button>
                             </div>
                         </div>
+                        )}
 
                         {/* Password strength bar (register only) */}
-                        {mode === "register" && password.length > 0 && (
+                        {mode === "register" && !magicLinkSent && password.length > 0 && (
                             <div className="flex gap-1 h-1">
                                 {[1, 2, 3, 4].map(i => (
                                     <div
@@ -380,25 +411,29 @@ export default function LoginPage() {
                             </div>
                         )}
 
-                        <Button
-                            type="submit"
-                            disabled={loading || (mode === "login" ? !isLoginValid : !isRegisterValid)}
-                            className={cn(
-                                "w-full h-12 font-black uppercase tracking-widest text-xs rounded-xl transition-all duration-300 active:scale-[0.98] mt-2",
-                                mode === "login"
-                                    ? "bg-brand text-white hover:bg-brand/90 shadow-lg shadow-brand/25"
-                                    : "bg-accent text-black hover:bg-accent/90 shadow-lg shadow-accent/20"
-                            )}
-                        >
-                            {loading ? (
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                            ) : (
-                                <span className="flex items-center justify-center gap-2">
-                                    {mode === "login" ? "Sign In" : "Create Free Account"}
-                                    <ArrowRight className="h-4 w-4" />
-                                </span>
-                            )}
-                        </Button>
+                        {!magicLinkSent && (
+                            <Button
+                                type="submit"
+                                disabled={loading || (mode === "login" ? !isLoginValid : mode === "register" ? !isRegisterValid : !isMagicLinkValid)}
+                                className={cn(
+                                    "w-full h-12 font-black uppercase tracking-widest text-xs rounded-xl transition-all duration-300 active:scale-[0.98] mt-2",
+                                    mode === "login"
+                                        ? "bg-brand text-white hover:bg-brand/90 shadow-lg shadow-brand/25"
+                                        : mode === "register"
+                                        ? "bg-accent text-black hover:bg-accent/90 shadow-lg shadow-accent/20"
+                                        : "bg-purple-600 text-white hover:bg-purple-700 shadow-lg shadow-purple-600/25"
+                                )}
+                            >
+                                {loading ? (
+                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                ) : (
+                                    <span className="flex items-center justify-center gap-2">
+                                        {mode === "login" ? "Sign In" : mode === "register" ? "Create Free Account" : "Send Magic Link"}
+                                        <ArrowRight className="h-4 w-4" />
+                                    </span>
+                                )}
+                            </Button>
+                        )}
 
                         {/* Google Sign In Divider */}
                         <div className="mt-6 flex items-center gap-3">

@@ -9,25 +9,27 @@ datasource db {
 }
 
 model User {
-  id               String    @id @default(cuid())
-  email            String    @unique
-  emailVerified    DateTime?
-  password         String?
-  username         String    @unique
-  name             String?
-  bio              String?   @db.Text
-  avatar           String?
-  niche            String?
-  onboardingDone   Boolean   @default(false)
-  whopCompanyId    String?
-  whopAccessToken  String?
-  whopRefreshToken String?
-  plan             Plan      @default(FREE)
-  planExpiresAt    DateTime?
-  customDomain     String?   @unique
-  domainVerified   Boolean   @default(false)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  emailVerified       DateTime?
+  password            String?
+  username            String    @unique
+  name                String?
+  bio                 String?   @db.Text
+  avatar              String?
+  niche               String?
+  onboardingDone      Boolean   @default(false)
+  whopCompanyId       String?
+  whopAccessToken     String?
+  whopRefreshToken    String?
+  plan                Plan      @default(FREE)
+  planExpiresAt       DateTime?
+  customDomain        String?   @unique
+  domainVerified      Boolean   @default(false)
+  magicLinkToken      String?   @unique
+  magicLinkExpires    DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   products            Product[]
   orders              Order[]             @relation("SellerOrders")
