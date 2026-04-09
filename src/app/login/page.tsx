@@ -114,13 +114,13 @@ export default function LoginPage() {
                 callbackUrl: "/dashboard",
             });
 
-            // NextAuth v5 returns null on success (with redirect:false it navigates manually)
-            // or an object with error property on failure
-            if (!res || res.error) {
-                toast.error("Incorrect email or password. Please try again.");
+            // NextAuth v5 returns object with ok/error properties
+            if (res?.error || !res?.ok) {
+                toast.error(res?.error || "Incorrect email or password. Please try again.");
             } else {
                 toast.success(mode === "register" ? "Welcome to bio page.store! 🎉" : "Welcome back!");
-                router.push(res.url || "/dashboard");
+                const redirectUrl = res.url || "/dashboard";
+                router.push(redirectUrl);
                 router.refresh();
             }
         } catch (err: any) {

@@ -17,13 +17,14 @@ import {
     Users,
     MessageSquare,
     Zap,
-    Globe
+    Globe,
+    LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/shared/Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 
 const navItems = [
     { label: "Overview", icon: Home, href: "/dashboard" },
@@ -70,7 +71,7 @@ export function Sidebar() {
                 })}
             </nav>
 
-            <div className="mt-auto border-t border-border p-4 space-y-4">
+            <div className="mt-auto border-t border-border p-4 space-y-3">
                 {user && (
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-3">
@@ -98,6 +99,14 @@ export function Sidebar() {
                             </span>
                             <ChevronRight className="h-3 w-3 opacity-0 transition-all group-hover:opacity-100" />
                         </Link>
+
+                        <button
+                            onClick={() => signOut({ redirectTo: "/login" })}
+                            className="w-full flex items-center gap-3 rounded-lg border border-border bg-surface-raised/50 px-3 py-2 text-xs font-medium text-muted-foreground transition-all hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30"
+                        >
+                            <LogOut className="h-4 w-4 shrink-0" />
+                            <span>Sign Out</span>
+                        </button>
                     </div>
                 )}
             </div>
