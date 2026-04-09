@@ -12,6 +12,7 @@ import {
     CheckCircle2, Eye, EyeOff, User, ShieldCheck,
     Zap, Star, TrendingUp, Users
 } from "lucide-react";
+import { Chrome } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -398,6 +399,24 @@ export default function LoginPage() {
                                 </span>
                             )}
                         </Button>
+
+                        {/* Google Sign In Divider */}
+                        <div className="mt-6 flex items-center gap-3">
+                            <div className="flex-1 h-px bg-border/50" />
+                            <span className="text-xs text-muted-foreground/50 uppercase tracking-widest font-semibold">Or continue with</span>
+                            <div className="flex-1 h-px bg-border/50" />
+                        </div>
+
+                        {/* Google Sign In Button */}
+                        <button
+                            type="button"
+                            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                            disabled={loading}
+                            className="w-full h-12 border border-border/50 rounded-xl bg-surface-raised/30 hover:bg-surface-raised/50 text-white font-bold uppercase tracking-widest text-xs transition-all duration-300 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50"
+                        >
+                            <Chrome className="h-5 w-5" />
+                            Google
+                        </button>
                     </form>
 
                     {/* Test credentials hint (login only) */}
