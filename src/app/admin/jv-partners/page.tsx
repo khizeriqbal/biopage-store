@@ -11,12 +11,17 @@ export const metadata: Metadata = {
 };
 
 async function getJvPartners() {
-    const partners = await prisma.jvPartner.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 50,
-    });
+    try {
+        const partners = await prisma.jvPartner.findMany({
+            orderBy: { createdAt: "desc" },
+            take: 50,
+        });
 
-    return partners;
+        return partners;
+    } catch (error) {
+        console.error("Error fetching JV partners:", error);
+        return [];
+    }
 }
 
 export default async function JvPartnersPage() {

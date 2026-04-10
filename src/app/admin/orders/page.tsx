@@ -12,37 +12,41 @@ export const metadata: Metadata = {
 
 async function getOrders() {
     try {
-    const orders = await prisma.order.findMany({
-        select: {
-            id: true,
-            amount: true,
-            createdAt: true,
-            user: {
-                select: {
-                    email: true,
-                    username: true,
+        const orders = await prisma.order.findMany({
+            select: {
+                id: true,
+                amount: true,
+                createdAt: true,
+                user: {
+                    select: {
+                        email: true,
+                        username: true,
+                    },
                 },
-            },
-            items: {
-                select: {
-                    product: {
-                        select: {
-                            name: true,
+                items: {
+                    select: {
+                        product: {
+                            select: {
+                                name: true,
+                            },
                         },
                     },
                 },
             },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 50,
-    });
+            orderBy: { createdAt: "desc" },
+            take: 50,
+        });
 
-    const totalRevenue = await prisma.order.aggregate({
-        _sum: { amount: true },
-        _count: true,
-    });
+        const totalRevenue = await prisma.order.aggregate({
+            _sum: { amount: true },
+            _count: true,
+        });
 
-    return { orders, totalRevenue };
+        return { orders, totalRevenue };
+    } catch (error) {
+        console.error("Error fetching orders:", error);
+        return { orders: [], totalRevenue: { _sum: { amount: 0 }, _count: 0 } };
+    }
 }
 
 export default async function OrdersPage() {

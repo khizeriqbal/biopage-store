@@ -11,24 +11,29 @@ export const metadata: Metadata = {
 };
 
 async function getEmailSequences() {
-    const sequences = await prisma.emailSequence.findMany({
-        select: {
-            id: true,
-            name: true,
-            active: true,
-            createdAt: true,
-            trigger: true,
-            _count: {
-                select: {
-                    steps: true,
-                    enrollments: true,
+    try {
+        const sequences = await prisma.emailSequence.findMany({
+            select: {
+                id: true,
+                name: true,
+                active: true,
+                createdAt: true,
+                trigger: true,
+                _count: {
+                    select: {
+                        steps: true,
+                        enrollments: true,
+                    },
                 },
             },
-        },
-        orderBy: { createdAt: "desc" },
-    });
+            orderBy: { createdAt: "desc" },
+        });
 
-    return sequences;
+        return sequences;
+    } catch (error) {
+        console.error("Error fetching email sequences:", error);
+        return [];
+    }
 }
 
 export default async function EmailSequencesPage() {
