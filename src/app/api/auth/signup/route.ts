@@ -1,6 +1,38 @@
-import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+
+async function initializeDatabaseIfNeeded() {
+  try {
+    // Try a simple query to check if tables exist
+    await prisma.user.findFirst({ take: 1 });
+  } catch (error: any) {
+    if (error.code === "P2021") {
+      // Table doesn't exist - try to initialize
+      console.log("[SIGNUP] Database not initialized, attempting to create tables...");
+      try {
+        // Call the init-db endpoint
+        const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+        const initSecret = process.env.INIT_DB_SECRET || "dev-secret";
+
+        const response = await fetch(`${baseUrl}/api/init-db`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${initSecret}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          console.error("[SIGNUP] Database initialization failed:", response.status);
+        } else {
+          console.log("[SIGNUP] Database initialized successfully");
+        }
+      } catch (initError) {
+        console.error("[SIGNUP] Error calling init-db:", initError);
+      }
+    }
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +45,9 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Initialize database if needed (first request after deployment)
+    await initializeDatabaseIfNeeded();
 
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({

@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Mail, Calendar, TrendingUp, Lock } from "lucide-react";
 import Link from "next/link";

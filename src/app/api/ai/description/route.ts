@@ -1,49 +1,80 @@
-import { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
-import { geminiStream, geminiWithRetry } from "@/lib/gemini";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-    const session = await auth();
-    if (!session?.user) {
-        return new Response("Unauthorized", { status: 401 });
-    }
+    try {
+        if (!process.env.GOOGLE_AI_API_KEY) {
+            return NextResponse.json(
+                { error: "Google AI API key not configured" },
+                { status: 500 }
+            );
+        }
 
-    const { title, type, niche, price } = await req.json();
+        const { title, type, niche, price, briefDescription } = await req.json();
 
-    const typeDescriptions: Record<string, string> = {
-        DIGITAL: "digital download (PDF, template, or file)",
-        COURSE: "online video course",
-        BOOKING: "coaching or consulting session",
-        MEMBERSHIP: "membership or subscription community",
-        LEAD_MAGNET: "free resource in exchange for email signup",
-    };
+        if (!title) {
+            return NextResponse.json(
+                { error: "Missing required field: title" },
+                { status: 400 }
+            );
+        }
 
-    const prompt = `Write a compelling product description for:
+        const typeDescriptions: Record<string, string> = {
+            DIGITAL: "digital download (PDF, template, or file)",
+            COURSE: "online video course",
+            BOOKING: "coaching or consulting session",
+            MEMBERSHIP: "membership or subscription community",
+            LEAD_MAGNET: "free resource in exchange for email signup",
+        };
+
+        const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+        const prompt = `Generate 3 different compelling product descriptions for:
 Product: "${title}"
 Type: ${typeDescriptions[type] || type}
 Creator niche: ${niche || "content creation"}
 Price: ${price === 0 ? "Free" : `$${price}`}
+${briefDescription ? `Brief description: ${briefDescription}` : ""}
 
-Requirements:
-- 3-4 sentences
-- Start with the OUTCOME or TRANSFORMATION the buyer gets — not features
-- Be specific and concrete (numbers, timeframes, results when possible)
-- Use active voice
-- Create urgency or desire without being pushy
-- End with a clear benefit statement
-- NO bullet points, NO emojis in the output
-- Output ONLY the description text, nothing else.`;
+Requirements for EACH description:
+- 3-5 sentences
+- Start with OUTCOME/TRANSFORMATION the buyer gets (not features)
+- Be specific and concrete (use numbers, timeframes, results when possible)
+- Use active voice and power words
+- Create desire without being pushy
+- Include one specific benefit statement
+- NO bullet points, NO emojis
+- Different angle/hook for each description
 
-    try {
-        const stream = await geminiWithRetry(() => geminiStream(prompt));
+Format as JSON:
+{
+  "descriptions": [
+    { "text": "description 1", "hook": "brief hook/angle" },
+    { "text": "description 2", "hook": "brief hook/angle" },
+    { "text": "description 3", "hook": "brief hook/angle" }
+  ]
+}`;
 
-        return new Response(stream, {
-            headers: { "Content-Type": "text/plain; charset=utf-8" },
-        });
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+
+        // Extract JSON from response
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            throw new Error("Could not parse AI response as JSON");
+        }
+
+        const descriptions = JSON.parse(jsonMatch[0]);
+        return NextResponse.json(descriptions);
+
     } catch (error) {
-        console.error("AI Error:", error);
-        return new Response("AI generation failed", { status: 500 });
+        console.error("Description generation error:", error);
+        return NextResponse.json(
+            { error: "Failed to generate descriptions", details: error instanceof Error ? error.message : "Unknown error" },
+            { status: 500 }
+        );
     }
 }

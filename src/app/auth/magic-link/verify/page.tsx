@@ -1,6 +1,4 @@
-import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { signIn } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 

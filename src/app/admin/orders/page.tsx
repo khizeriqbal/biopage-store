@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, DollarSign, User, Calendar, CheckCircle2, Clock } from "lucide-react";
 

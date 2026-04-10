@@ -1,5 +1,4 @@
 import { whop } from "@/lib/whop";
-import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {

@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/shared/Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useSession, signOut } from "next-auth/react";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const navItems = [
     { label: "Overview", icon: Home, href: "/dashboard" },
@@ -43,8 +43,16 @@ const navItems = [
 
 export function Sidebar() {
     const pathname = usePathname();
-    const { data: session } = useSession();
-    const user = session?.user as any;
+    const { user, signOut } = useAuth();
+
+    const handleSignOut = async () => {
+        await signOut();
+        window.location.href = "/login";
+    };
+
+    const userEmail = user?.email || "";
+    const userName = user?.user_metadata?.full_name || userEmail.split("@")[0] || "User";
+    const userInitial = userName?.charAt(0) ?? "U";
 
     return (
         <aside className="fixed left-0 top-0 z-40 h-screen w-60 border-r border-border bg-dark-bg/50 backdrop-blur-md hidden md:flex flex-col">
@@ -76,19 +84,18 @@ export function Sidebar() {
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-3">
                             <Avatar className="h-9 w-9 border border-border">
-                                <AvatarImage src={user.image ?? user.avatar ?? ""} />
-                                <AvatarFallback>{user.name?.charAt(0) ?? "U"}</AvatarFallback>
+                                <AvatarFallback>{userInitial}</AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col min-w-0">
-                                <span className="truncate text-sm font-semibold">{user.name}</span>
+                                <span className="truncate text-sm font-semibold">{userName}</span>
                                 <Badge variant="secondary" className="w-fit text-[10px] h-4 uppercase tracking-wider bg-accent/20 text-accent border-none leading-none">
-                                    {user.plan ?? "FREE"}
+                                    FREE
                                 </Badge>
                             </div>
                         </div>
 
                         <Link
-                            href={`/${user.username || "me"}`}
+                            href={`/me`}
                             target="_blank"
                             className="flex items-center justify-between gap-1 rounded-lg border border-border bg-surface-raised/50 px-3 py-2 text-xs font-medium text-muted-foreground transition-all hover:bg-surface-hover hover:text-white group"
                         >
@@ -101,7 +108,7 @@ export function Sidebar() {
                         </Link>
 
                         <button
-                            onClick={() => signOut({ redirectTo: "/login" })}
+                            onClick={handleSignOut}
                             className="w-full flex items-center gap-3 rounded-lg border border-border bg-surface-raised/50 px-3 py-2 text-xs font-medium text-muted-foreground transition-all hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30"
                         >
                             <LogOut className="h-4 w-4 shrink-0" />

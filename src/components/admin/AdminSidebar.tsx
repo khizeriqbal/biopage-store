@@ -15,7 +15,7 @@ import {
     TrendingUp,
     Crown,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const ADMIN_MENU = [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -30,6 +30,12 @@ const ADMIN_MENU = [
 
 export function AdminSidebar() {
     const pathname = usePathname();
+    const { signOut } = useAuth();
+
+    const handleSignOut = async () => {
+        await signOut();
+        window.location.href = "/";
+    };
 
     return (
         <aside className="w-64 min-h-screen bg-surface-raised border-r border-border/50 flex flex-col">
@@ -63,7 +69,7 @@ export function AdminSidebar() {
             {/* Footer */}
             <div className="p-4 border-t border-border/50 space-y-2">
                 <button
-                    onClick={() => signOut({ redirectTo: "/" })}
+                    onClick={handleSignOut}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-white hover:bg-surface-raised transition-colors"
                 >
                     <LogOut className="h-4 w-4" />

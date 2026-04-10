@@ -1,29 +1,29 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/shared/Logo";
 import Link from "next/link";
 import { LogOut, Settings, Plus, BarChart3, Users, Package } from "lucide-react";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
+  const { user, loading, signOut } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (!loading && !user) {
       router.push("/login");
     }
-  }, [status, router]);
+  }, [loading, user, router]);
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false });
+    await signOut();
     router.push("/");
   };
 
-  if (status === "loading") {
+  if (loading) {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
         <div className="animate-spin">
@@ -33,7 +33,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (!session?.user) {
+  if (!user) {
     return null;
   }
 
@@ -60,7 +60,7 @@ export default function DashboardPage() {
         {/* Welcome Section */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-white mb-2">
-            Welcome back, {session.user.name || session.user.email}!
+            Welcome back, {user?.user_metadata?.full_name || user?.email}!
           </h1>
           <p className="text-muted-foreground">
             Manage your products, subscribers, and store settings from here.

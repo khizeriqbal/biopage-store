@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
 import { User } from "lucide-react";
 import { JvPartnersTable } from "@/components/admin/JvPartnersTable";
 

@@ -1,41 +1,68 @@
-import { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
-import { geminiStream, geminiWithRetry } from "@/lib/gemini";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-    const session = await auth();
-    if (!session?.user) {
-        return new Response("Unauthorized", { status: 401 });
-    }
-
-    const { name, niche, products } = await req.json();
-
-    const prompt = `Write a compelling, authentic creator bio for ${name || "this creator"}.
-Niche: ${niche || "content creation"}
-They sell: ${products?.length ? products.join(", ") : "digital products and services"}
-
-Requirements:
-- 2-3 sentences maximum
-- First person voice ("I help...", "I create...")
-- Specific to their niche — not generic
-- Focus on who they help and what transformation they provide
-- Sound human, warm, and confident
-- NO hashtags, NO emojis, NO corporate speak
-- Output ONLY the bio text, nothing else. No quotes, no intro, just the bio.`;
-
     try {
-        const stream = await geminiWithRetry(() => geminiStream(prompt));
+        if (!process.env.GOOGLE_AI_API_KEY) {
+            return NextResponse.json(
+                { error: "Google AI API key not configured" },
+                { status: 500 }
+            );
+        }
 
-        return new Response(stream, {
-            headers: {
-                "Content-Type": "text/plain; charset=utf-8",
-                "X-Content-Type-Options": "nosniff",
-            },
-        });
+        const { niche, style, achievements } = await req.json();
+
+        if (!niche || !style) {
+            return NextResponse.json(
+                { error: "Missing required fields: niche, style" },
+                { status: 400 }
+            );
+        }
+
+        const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+        const prompt = `Generate 3 different creator bios for someone in the ${niche} niche.
+Style: ${style} (choose from: professional, casual, witty)
+${achievements ? `Their key achievements or info: ${achievements}` : ""}
+
+Requirements for each bio:
+- 150-300 characters
+- Compelling and conversion-focused
+- Uses first-person voice ("I help...", "I create...")
+- Specific to their niche
+- Includes value proposition
+- Sound human and confident
+- NO hashtags, NO emojis, NO corporate jargon
+
+Format as JSON:
+{
+  "bios": [
+    { "text": "bio 1 text here", "length": number },
+    { "text": "bio 2 text here", "length": number },
+    { "text": "bio 3 text here", "length": number }
+  ]
+}`;
+
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+
+        // Extract JSON from response
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            throw new Error("Could not parse AI response as JSON");
+        }
+
+        const bios = JSON.parse(jsonMatch[0]);
+        return NextResponse.json(bios);
+
     } catch (error) {
-        console.error("AI Error:", error);
-        return new Response("AI generation failed", { status: 500 });
+        console.error("Bio generation error:", error);
+        return NextResponse.json(
+            { error: "Failed to generate bios", details: error instanceof Error ? error.message : "Unknown error" },
+            { status: 500 }
+        );
     }
 }

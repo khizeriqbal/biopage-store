@@ -1,4 +1,3 @@
-import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { BioHeader } from "@/components/public-page/BioHeader";
 import { ProductGrid } from "@/components/public-page/ProductGrid";

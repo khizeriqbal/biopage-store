@@ -1,6 +1,5 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/shared/Logo";
 import Link from "next/link";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const STEPS = [
   { id: 1, title: "Bio & Avatar", description: "Set up your profile" },
@@ -17,7 +17,7 @@ const STEPS = [
 ];
 
 export default function OnboardingPage() {
-  const { data: session, status } = useSession();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -31,10 +31,10 @@ export default function OnboardingPage() {
   });
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (!authLoading && !user) {
       router.push("/login");
     }
-  }, [status, router]);
+  }, [authLoading, user, router]);
 
   const handleNext = async () => {
     if (currentStep === 4) {
@@ -57,7 +57,7 @@ export default function OnboardingPage() {
     }
   };
 
-  if (status === "loading") {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
         <div className="animate-spin">
@@ -67,7 +67,7 @@ export default function OnboardingPage() {
     );
   }
 
-  if (!session?.user) {
+  if (!user) {
     return null;
   }
 
