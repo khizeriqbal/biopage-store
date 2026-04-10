@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { User } from "lucide-react";
 import { JvPartnersTable } from "@/components/admin/JvPartnersTable";
 
+import prisma from "@/lib/prisma";
 export const dynamic = 'force-dynamic';
 
 

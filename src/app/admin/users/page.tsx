@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { Mail, Calendar, TrendingUp, Lock } from "lucide-react";
 import Link from "next/link";
+import prisma from "@/lib/prisma";
 
 export const dynamic = 'force-dynamic';
 

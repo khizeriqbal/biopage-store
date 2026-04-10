@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { Package, DollarSign, Eye, Calendar } from "lucide-react";
 
+import prisma from "@/lib/prisma";
 export const dynamic = 'force-dynamic';
 
 

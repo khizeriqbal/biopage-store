@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { TrendingUp, Users, ShoppingCart, DollarSign, BarChart3, AlertCircle, Package } from "lucide-react";
+import prisma from "@/lib/prisma";
 
 export const dynamic = 'force-dynamic';
 
