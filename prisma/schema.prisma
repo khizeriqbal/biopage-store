@@ -25,6 +25,14 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Admin Fields
+  role          String    @default("user")        // "user" | "admin" | "superadmin"
+  isAdmin       Boolean   @default(false)         // Backward compatibility
+  adminNotes    String?   @db.Text                // Internal admin notes
+  suspendedAt   DateTime?                         // Null = active, DateTime = suspended
+  lastSuspendedBy String?                         // Track which admin suspended
+  suspendReason String?                           // Why was user suspended
+
   // Relations
   accounts      Account[]
   sessions      Session[]
@@ -38,6 +46,7 @@ model User {
   affiliateLinks AffiliateLink[]
   coupons       Coupon[]
   bookings      Booking[]
+  adminLogs     AdminLog[] @relation("AdminUser")
 }
 
 model Account {
@@ -360,4 +369,24 @@ model JvPartner {
   list      String?
   approved  Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// Admin Audit Log
+model AdminLog {
+  id           String   @id @default(cuid())
+  adminId      String                         // Who performed the action
+  action       String                         // "suspend", "promote", "update", etc.
+  entityType   String                         // "user", "product", "order"
+  entityId     String                         // ID of what was affected
+  oldValues    String?  @db.Text              // JSON of previous values
+  newValues    String?  @db.Text              // JSON of new values
+  reason       String?  @db.Text              // Why was this action taken
+  ipAddress    String?                        // For security tracking
+  createdAt    DateTime @default(now())
+
+  admin        User     @relation("AdminUser", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }
