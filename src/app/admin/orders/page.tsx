@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 async function getOrders() {
+    try {
     const orders = await prisma.order.findMany({
         select: {
             id: true,

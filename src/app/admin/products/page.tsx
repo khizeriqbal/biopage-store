@@ -11,30 +11,35 @@ export const metadata: Metadata = {
 };
 
 async function getProducts() {
-    const products = await prisma.product.findMany({
-        select: {
-            id: true,
-            name: true,
-            price: true,
-            priceType: true,
-            createdAt: true,
-            user: {
-                select: {
-                    email: true,
-                    username: true,
+    try {
+        const products = await prisma.product.findMany({
+            select: {
+                id: true,
+                name: true,
+                price: true,
+                priceType: true,
+                createdAt: true,
+                user: {
+                    select: {
+                        email: true,
+                        username: true,
+                    },
+                },
+                _count: {
+                    select: {
+                        orderItems: true,
+                    },
                 },
             },
-            _count: {
-                select: {
-                    orderItems: true,
-                },
-            },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 50,
-    });
+            orderBy: { createdAt: "desc" },
+            take: 50,
+        });
 
-    return products;
+        return products;
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        return [];
+    }
 }
 
 export default async function ProductsPage() {
