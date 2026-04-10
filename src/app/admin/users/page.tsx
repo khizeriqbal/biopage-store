@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 };
 
 async function getUsers() {
+    try {
     const users = await prisma.user.findMany({
         select: {
             id: true,
@@ -32,6 +33,10 @@ async function getUsers() {
     });
 
     return users;
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        return [];
+    }
 }
 
 export default async function UsersPage() {

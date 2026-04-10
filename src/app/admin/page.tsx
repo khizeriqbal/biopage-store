@@ -10,28 +10,42 @@ export const metadata: Metadata = {
 };
 
 async function getAdminStats() {
-    const [users, products, orders, totalRevenue, affiliates, reviews] = await Promise.all([
-        prisma.user.count(),
-        prisma.product.count(),
-        prisma.order.count(),
-        prisma.order.aggregate({
-            _sum: { amount: true },
-        }),
-        prisma.affiliateLink.count(),
-        prisma.review.count(),
-    ]);
+    try {
+        const [users, products, orders, totalRevenue, affiliates, reviews] = await Promise.all([
+            prisma.user.count(),
+            prisma.product.count(),
+            prisma.order.count(),
+            prisma.order.aggregate({
+                _sum: { amount: true },
+            }),
+            prisma.affiliateLink.count(),
+            prisma.review.count(),
+        ]);
 
-    const avgOrderValue = orders > 0 ? (totalRevenue._sum.amount || 0) / orders : 0;
+        const avgOrderValue = orders > 0 ? (totalRevenue._sum.amount || 0) / orders : 0;
 
-    return {
-        users,
-        products,
-        orders,
-        totalRevenue: totalRevenue._sum.amount || 0,
-        avgOrderValue,
-        affiliates,
-        reviews,
-    };
+        return {
+            users,
+            products,
+            orders,
+            totalRevenue: totalRevenue._sum.amount || 0,
+            avgOrderValue,
+            affiliates,
+            reviews,
+        };
+    } catch (error) {
+        console.error("Error fetching admin stats:", error);
+        // Return placeholder stats if database query fails
+        return {
+            users: 0,
+            products: 0,
+            orders: 0,
+            totalRevenue: 0,
+            avgOrderValue: 0,
+            affiliates: 0,
+            reviews: 0,
+        };
+    }
 }
 
 export default async function AdminDashboard() {
