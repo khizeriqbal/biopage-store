@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 
 // Get the main app hostname - prioritize NEXTAUTH_URL for Vercel deployments
 const getMainHostname = () => {
@@ -27,8 +28,6 @@ export async function middleware(req: NextRequest) {
         pathname.startsWith("/api") ||
         pathname.startsWith("/favicon") ||
         pathname.startsWith("/login") ||
-        pathname.startsWith("/dashboard") ||
-        pathname.startsWith("/onboarding") ||
         pathname.startsWith("/access") ||
         pathname.startsWith("/review") ||
         pathname.startsWith("/sales") ||
@@ -36,6 +35,19 @@ export async function middleware(req: NextRequest) {
         pathname.startsWith("/jv")
     ) {
         return NextResponse.next();
+    }
+
+    // Protect dashboard and onboarding routes
+    if (pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding")) {
+        const session = await auth();
+
+        if (!session?.user) {
+            // Redirect to login if not authenticated
+            const url = req.nextUrl.clone();
+            url.pathname = "/login";
+            url.search = `?error=AccessDenied&callbackUrl=${pathname}`;
+            return NextResponse.redirect(url);
+        }
     }
 
     // Extract hostname without port

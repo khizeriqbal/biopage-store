@@ -1,67 +1,54 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export const dynamic = 'force-dynamic';
+export async function POST(req: NextRequest) {
+  try {
+    const session = await auth();
 
-export async function POST(req: Request) {
-    try {
-        const session = await auth();
-        const userId = session?.user?.id;
-
-        if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const { username, bio, name, offerings } = await req.json();
-
-        if (!username || !name) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-        }
-
-        const normalizedUsername = username.toLowerCase().replace(/[^a-z0-9_]/g, '');
-
-        // Check final username availability (exclude current user)
-        const existing = await prisma.user.findFirst({
-            where: { username: normalizedUsername, NOT: { id: userId } }
-        });
-
-        if (existing) {
-            return NextResponse.json({ error: "Username already taken" }, { status: 400 });
-        }
-
-        // Update User — use onboardingDone (Boolean) not onboardingStatus
-        await prisma.user.update({
-            where: { id: userId },
-            data: {
-                username: normalizedUsername,
-                name,
-                bio: bio || null,
-                onboardingDone: true,   // ✅ correct field name from schema
-            }
-        });
-
-        // Upsert PageSettings with defaults
-        await prisma.pageSettings.upsert({
-            where: { userId },
-            update: {},
-            create: {
-                userId,
-                primaryColor: "#5C4EFA",
-                accentColor: "#C6FF4E",
-                theme: "midnight",
-                layout: [
-                    { id: "1", type: "ABOUT", enabled: true, title: "About Me" },
-                    { id: "2", type: "PRODUCTS", enabled: true, title: "My Products" },
-                    { id: "3", type: "EMAIL", enabled: true, title: "Join My List" },
-                ],
-                socialLinks: {},
-            }
-        });
-
-        return NextResponse.json({ success: true });
-    } catch (err: any) {
-        console.error("Onboarding Persistence Error:", err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
+
+    const { name, bio, avatar, niche, accentColor } = await req.json();
+
+    // Update user with onboarding data
+    const user = await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        name: name || session.user.name,
+        bio,
+        avatar,
+        niche,
+        onboardingDone: true,
+      },
+    });
+
+    // Create page settings
+    await prisma.pageSettings.upsert({
+      where: { userId: session.user.id },
+      update: { accentColor },
+      create: {
+        userId: session.user.id,
+        accentColor,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        message: "Onboarding completed",
+        user,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("[ONBOARDING_ERROR]", error);
+    return NextResponse.json(
+      { error: "Failed to complete onboarding" },
+      { status: 500 }
+    );
+  }
 }
