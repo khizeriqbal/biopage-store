@@ -47,6 +47,11 @@ model User {
   coupons       Coupon[]
   bookings      Booking[]
   adminLogs     AdminLog[] @relation("AdminUser")
+
+  // Payment Relations
+  wallet        CreatorWallet?
+  withdrawals   WithdrawalRequest[] @relation("WithdrawalRequests")
+  approvedWithdrawals WithdrawalRequest[] @relation("ApprovedWithdrawals")
 }
 
 model Account {
@@ -148,6 +153,12 @@ model Order {
   status          String   @default("pending")
   paymentId       String?
   affiliateLinkId String?
+
+  // Commission tracking
+  platformFee     Float    @default(0.0)     // Amount platform keeps
+  creatorEarning  Float    @default(0.0)     // Amount creator gets
+  commissionRate  Float    @default(0.3)     // Commission percentage (e.g., 0.3 = 30%)
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -389,4 +400,62 @@ model AdminLog {
   @@index([adminId])
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+// Payment & Earnings System
+model CreatorWallet {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  balance       Float    @default(0.0)       // Available to withdraw
+  totalEarned   Float    @default(0.0)       // Lifetime earnings
+  lastUpdated   DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions  WalletTransaction[]
+}
+
+model WalletTransaction {
+  id            String   @id @default(cuid())
+  walletId      String
+  type          String                       // "SALE", "WITHDRAWAL", "REFUND", "ADJUSTMENT"
+  amount        Float
+  orderId       String?                      // If from a sale
+  withdrawalId  String?                      // If withdrawal
+  description   String?
+  createdAt     DateTime @default(now())
+
+  wallet        CreatorWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([createdAt])
+}
+
+model WithdrawalRequest {
+  id            String   @id @default(cuid())
+  userId        String
+  amount        Float
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED, COMPLETED
+  bankAccount   String?                      // Account info they want withdrawal to
+  requestedAt   DateTime @default(now())
+  approvedAt    DateTime?
+  approvedBy    String?                      // Admin who approved
+  completedAt   DateTime?
+  reason        String?                      // Admin notes
+
+  user          User     @relation("WithdrawalRequests", fields: [userId], references: [id], onDelete: Cascade)
+  approver      User?    @relation("ApprovedWithdrawals", fields: [approvedBy], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([requestedAt])
+}
+
+model PlatformConfig {
+  id            String   @id @default(cuid())
+  key           String   @unique             // e.g., "PRODUCT_COMMISSION", "COURSE_COMMISSION"
+  value         String                       // Store as JSON string
+  description   String?
+  updatedAt     DateTime @updatedAt
+
+  @@index([key])
 }
