@@ -4,58 +4,74 @@
 
 @layer base {
   :root {
-    --background: 240 10% 4%;
-    --foreground: 240 10% 98%;
-    --card: 240 10% 6%;
-    --card-foreground: 240 10% 98%;
-    --popover: 240 10% 4%;
-    --popover-foreground: 240 10% 98%;
-    --primary: 245 92% 64%;
+    /* Modern Dark Navy + Blue/Purple Gradients */
+    --background: 219 39% 6%;         /* #0F172A */
+    --foreground: 210 40% 96%;        /* #F1F5F9 */
+    --card: 217 33% 17%;              /* #1E293B */
+    --card-foreground: 210 40% 96%;   /* #F1F5F9 */
+    --popover: 219 39% 6%;            /* #0F172A */
+    --popover-foreground: 210 40% 96%; /* #F1F5F9 */
+
+    /* Primary: Blue */
+    --primary: 217 91% 60%;           /* #3B82F6 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 240 10% 98%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 79 100% 65%;
-    --accent-foreground: 240 10% 4%;
+
+    /* Secondary: Emerald Green */
+    --secondary: 160 84% 39%;         /* #10B981 */
+    --secondary-foreground: 210 40% 96%;
+
+    /* Muted: Gray */
+    --muted: 217 33% 43%;             /* #64748B */
+    --muted-foreground: 217 33% 58%;  /* #94A3B8 */
+
+    /* Accent: Purple */
+    --accent: 270 84% 60%;            /* #8B5CF6 */
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive: Red */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 10% 12%;
-    --input: 240 10% 12%;
-    --ring: 245 92% 64%;
+
+    /* Borders & Inputs */
+    --border: 217 33% 25%;            /* #334155 */
+    --input: 217 33% 17%;             /* #1E293B */
+    --ring: 217 91% 60%;              /* #3B82F6 */
 
     --radius: 0.75rem;
 
-    --brand: #5C4EFA;
-    --accent-hex: #C6FF4E;
-    --bg-hex: #0D0D14;
-    --surface: #13131F;
-    --surface-raised: #1A1A2E;
-    --border-hex: #1E1E30;
-    --text-hex: #F0EFFE;
-    --muted-hex: #8B87A8;
+    /* Hex Color Aliases */
+    --navy-dark: #0F172A;
+    --navy-light: #1E293B;
+    --blue-primary: #3B82F6;
+    --purple-accent: #8B5CF6;
+    --emerald-secondary: #10B981;
+    --emerald-dark: #059669;
+    --text-light: #F1F5F9;
+    --text-muted: #94A3B8;
+    --gray-600: #4B5563;
   }
 
   .dark {
-    --background: 240 10% 4%;
-    --foreground: 240 10% 98%;
-    --card: 240 10% 6%;
-    --card-foreground: 240 10% 98%;
-    --popover: 240 10% 4%;
-    --popover-foreground: 240 10% 98%;
-    --primary: 245 92% 64%;
+    /* Same as root (all content is dark mode) */
+    --background: 219 39% 6%;
+    --foreground: 210 40% 96%;
+    --card: 217 33% 17%;
+    --card-foreground: 210 40% 96%;
+    --popover: 219 39% 6%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 240 10% 98%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 79 100% 65%;
-    --accent-foreground: 240 10% 4%;
+    --secondary: 160 84% 39%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 33% 43%;
+    --muted-foreground: 217 33% 58%;
+    --accent: 270 84% 60%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 10% 12%;
-    --input: 240 10% 12%;
-    --ring: 245 92% 64%;
+    --border: 217 33% 25%;
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
   }
 }
 
@@ -87,7 +103,44 @@
   @apply bg-muted-foreground;
 }
 
-/* Glassmorphism utility */
+/* Glassmorphism & Modern Utilities */
 .glass {
-  @apply bg-white/5 backdrop-blur-lg border border-white/10;
+  @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-xl;
+}
+
+.card-modern {
+  @apply rounded-xl border border-white/10 bg-slate-800/40 backdrop-blur-sm p-6 transition-all hover:bg-slate-800/60;
+}
+
+.gradient-blue-purple {
+  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+}
+
+.gradient-emerald {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shadow-glow {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+}
+
+.shadow-glow-purple {
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.2);
+}
+
+/* Smooth transitions */
+.transition-smooth {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+/* Hover effects */
+.hover-lift {
+  @apply hover:transform hover:scale-105 hover:shadow-lg transition-smooth;
 }
