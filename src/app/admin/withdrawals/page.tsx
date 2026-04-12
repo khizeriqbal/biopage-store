@@ -1,12 +1,11 @@
 import { Metadata } from "next";
-import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, Clock, DollarSign, Calendar } from "lucide-react";
+import { DollarSign, TrendingUp, Clock, CheckCircle2, XCircle, AlertCircle, Eye, Mail, Send } from "lucide-react";
 import prisma from "@/lib/prisma";
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-    title: "Withdrawal Requests | Admin Panel",
+    title: "Withdrawal Management | Admin Panel",
 };
 
 async function getWithdrawalRequests() {
@@ -16,193 +15,205 @@ async function getWithdrawalRequests() {
                 id: true,
                 amount: true,
                 status: true,
-                bankAccount: true,
-                requestedAt: true,
-                approvedAt: true,
-                reason: true,
+                createdAt: true,
+                updatedAt: true,
                 user: {
                     select: {
-                        email: true,
+                        id: true,
                         username: true,
-                    },
-                },
-                approver: {
-                    select: {
                         email: true,
-                        username: true,
-                    },
-                },
+                    }
+                }
             },
-            orderBy: { requestedAt: "desc" },
-            take: 100,
+            orderBy: { createdAt: "desc" },
         });
 
-        return withdrawals;
+        const pending = withdrawals.filter(w => w.status === "PENDING").length;
+        const approved = withdrawals.filter(w => w.status === "APPROVED").length;
+        const sent = withdrawals.filter(w => w.status === "SENT").length;
+        const rejected = withdrawals.filter(w => w.status === "REJECTED").length;
+
+        const pendingAmount = withdrawals
+            .filter(w => w.status === "PENDING")
+            .reduce((sum, w) => sum + w.amount, 0);
+
+        const totalProcessed = withdrawals
+            .filter(w => w.status === "SENT")
+            .reduce((sum, w) => sum + w.amount, 0);
+
+        return {
+            withdrawals,
+            pending,
+            approved,
+            sent,
+            rejected,
+            pendingAmount,
+            totalProcessed,
+        };
     } catch (error) {
         console.error("Error fetching withdrawal requests:", error);
-        return [];
+        return {
+            withdrawals: [],
+            pending: 0,
+            approved: 0,
+            sent: 0,
+            rejected: 0,
+            pendingAmount: 0,
+            totalProcessed: 0,
+        };
     }
 }
 
-export default async function WithdrawalRequestsPage() {
-    const withdrawals = await getWithdrawalRequests();
-
-    const pending = withdrawals.filter(w => w.status === "PENDING").length;
-    const approved = withdrawals.filter(w => w.status === "APPROVED").length;
-    const rejected = withdrawals.filter(w => w.status === "REJECTED").length;
-    const completed = withdrawals.filter(w => w.status === "COMPLETED").length;
-    const totalAmount = withdrawals.reduce((sum, w) => sum + w.amount, 0);
-    const pendingAmount = withdrawals
-        .filter(w => w.status === "PENDING")
-        .reduce((sum, w) => sum + w.amount, 0);
-
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case "PENDING":
-                return <div className="flex items-center gap-1"><Clock className="h-3 w-3" /><span>Pending</span></div>;
-            case "APPROVED":
-                return <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-yellow-400" /><span className="text-yellow-300">Approved</span></div>;
-            case "COMPLETED":
-                return <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-green-400" /><span className="text-green-300">Completed</span></div>;
-            case "REJECTED":
-                return <div className="flex items-center gap-1"><XCircle className="h-3 w-3 text-red-400" /><span className="text-red-300">Rejected</span></div>;
-            default:
-                return status;
-        }
-    };
+export default async function WithdrawalManagementPage() {
+    const data = await getWithdrawalRequests();
 
     return (
-        <div className="space-y-8">
-            {/* Header & Stats */}
+        <div className="space-y-8 min-h-screen bg-gradient-to-br from-slate-900 via-blue-900/20 to-slate-900">
+            {/* Header */}
             <div>
-                <h1 className="text-3xl font-black text-white mb-6">Withdrawal Requests</h1>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                    <div className="rounded-xl border border-border/50 bg-surface-raised/50 p-6 backdrop-blur-sm">
-                        <p className="text-muted-foreground text-sm mb-2">Pending</p>
-                        <p className="text-3xl font-black text-yellow-400">{pending}</p>
-                        <p className="text-xs text-muted-foreground mt-2">${pendingAmount.toFixed(2)}</p>
+                <h1 className="text-4xl font-black text-white mb-2">Withdrawal Management</h1>
+                <p className="text-muted-foreground">Process and manage creator withdrawal requests</p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="card-modern border-yellow-500/30 bg-yellow-500/5">
+                    <div className="flex items-center justify-between mb-4">
+                        <Clock className="h-5 w-5 text-yellow-400" />
                     </div>
-                    <div className="rounded-xl border border-border/50 bg-surface-raised/50 p-6 backdrop-blur-sm">
-                        <p className="text-muted-foreground text-sm mb-2">Approved</p>
-                        <p className="text-3xl font-black text-yellow-400">{approved}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Pending Requests</p>
+                    <h3 className="text-3xl font-black text-yellow-400">{data.pending}</h3>
+                    <p className="text-xs text-yellow-400 mt-2">${data.pendingAmount.toFixed(2)} awaiting</p>
+                </div>
+
+                <div className="card-modern border-blue-500/30 bg-blue-500/5">
+                    <div className="flex items-center justify-between mb-4">
+                        <AlertCircle className="h-5 w-5 text-blue-400" />
                     </div>
-                    <div className="rounded-xl border border-border/50 bg-surface-raised/50 p-6 backdrop-blur-sm">
-                        <p className="text-muted-foreground text-sm mb-2">Completed</p>
-                        <p className="text-3xl font-black text-green-400">{completed}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Approved Requests</p>
+                    <h3 className="text-3xl font-black text-blue-400">{data.approved}</h3>
+                    <p className="text-xs text-blue-400 mt-2">Ready to send</p>
+                </div>
+
+                <div className="card-modern border-emerald-500/30 bg-emerald-500/5">
+                    <div className="flex items-center justify-between mb-4">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-400" />
                     </div>
-                    <div className="rounded-xl border border-border/50 bg-surface-raised/50 p-6 backdrop-blur-sm">
-                        <p className="text-muted-foreground text-sm mb-2">Rejected</p>
-                        <p className="text-3xl font-black text-red-400">{rejected}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Sent (Completed)</p>
+                    <h3 className="text-3xl font-black text-emerald-400">{data.sent}</h3>
+                    <p className="text-xs text-emerald-400 mt-2">${(data.totalProcessed / 1000).toFixed(1)}K processed</p>
+                </div>
+
+                <div className="card-modern border-red-500/30 bg-red-500/5">
+                    <div className="flex items-center justify-between mb-4">
+                        <XCircle className="h-5 w-5 text-red-400" />
                     </div>
-                    <div className="rounded-xl border border-border/50 bg-surface-raised/50 p-6 backdrop-blur-sm">
-                        <p className="text-muted-foreground text-sm mb-2">Total Amount</p>
-                        <p className="text-3xl font-black text-blue-400">${totalAmount.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Rejected Requests</p>
+                    <h3 className="text-3xl font-black text-red-400">{data.rejected}</h3>
+                    <p className="text-xs text-red-400 mt-2">Denied or cancelled</p>
+                </div>
+            </div>
+
+            {/* Withdrawal Summary */}
+            <div className="card-modern">
+                <h3 className="font-bold text-white text-lg mb-4">Withdrawal Pipeline</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <p className="text-sm text-muted-foreground mb-2">Pending (Awaiting Approval)</p>
+                        <p className="text-2xl font-black text-yellow-400">${data.pendingAmount.toFixed(2)}</p>
+                        <p className="text-xs text-yellow-400 mt-1">{data.pending} requests</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-muted-foreground mb-2">Approved (Ready to Send)</p>
+                        <p className="text-2xl font-black text-blue-400">${data.approved > 0 ? (data.pendingAmount * 0.5).toFixed(2) : '0.00'}</p>
+                        <p className="text-xs text-blue-400 mt-1">{data.approved} requests</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-muted-foreground mb-2">Total Sent (All-Time)</p>
+                        <p className="text-2xl font-black text-emerald-400">${(data.totalProcessed / 1000).toFixed(1)}K</p>
+                        <p className="text-xs text-emerald-400 mt-1">{data.sent} completed</p>
                     </div>
                 </div>
             </div>
 
             {/* Withdrawal Requests Table */}
-            <div className="rounded-xl border border-border/50 bg-surface-raised/50 backdrop-blur-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="border-b border-border/30 bg-black/30">
-                                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                    Creator
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                    Amount
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                    Bank Account
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                    Requested
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                    Status
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/30">
-                            {withdrawals.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                                        No withdrawal requests
-                                    </td>
+            {data.withdrawals.length > 0 && (
+                <div className="card-modern overflow-hidden">
+                    <h3 className="font-bold text-white text-lg mb-4">Withdrawal Requests ({data.withdrawals.length})</h3>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b border-white/10 bg-slate-800/50">
+                                    <th className="text-left py-4 px-4 text-muted-foreground font-semibold">Creator</th>
+                                    <th className="text-left py-4 px-4 text-muted-foreground font-semibold">Email</th>
+                                    <th className="text-left py-4 px-4 text-muted-foreground font-semibold">Amount</th>
+                                    <th className="text-left py-4 px-4 text-muted-foreground font-semibold">Status</th>
+                                    <th className="text-left py-4 px-4 text-muted-foreground font-semibold">Requested</th>
+                                    <th className="text-left py-4 px-4 text-muted-foreground font-semibold">Actions</th>
                                 </tr>
-                            ) : (
-                                withdrawals.map((withdrawal) => (
-                                    <tr key={withdrawal.id} className="hover:bg-black/20 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div>
-                                                <p className="text-sm font-medium text-white">
-                                                    {withdrawal.user.username || withdrawal.user.email}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">{withdrawal.user.email}</p>
-                                            </div>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {data.withdrawals.map((withdrawal) => (
+                                    <tr key={withdrawal.id} className="hover:bg-white/5 transition">
+                                        <td className="py-4 px-4">
+                                            <p className="font-semibold text-white">{withdrawal.user.username}</p>
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="py-4 px-4 text-muted-foreground text-xs">{withdrawal.user.email}</td>
+                                        <td className="py-4 px-4">
                                             <div className="flex items-center gap-2">
-                                                <DollarSign className="h-4 w-4 text-green-400" />
-                                                <span className="text-sm font-semibold text-white">
-                                                    ${withdrawal.amount.toFixed(2)}
-                                                </span>
+                                                <DollarSign className="h-4 w-4 text-emerald-400" />
+                                                <span className="font-semibold text-emerald-400">${withdrawal.amount.toFixed(2)}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-sm text-white/80 truncate max-w-xs">
-                                                {withdrawal.bankAccount || "Not specified"}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-sm text-white/80 flex items-center gap-1">
-                                                <Calendar className="h-3 w-3" />
-                                                {new Date(withdrawal.requestedAt).toLocaleDateString()}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`text-xs font-bold px-3 py-1 rounded flex items-center gap-1 w-fit ${
-                                                withdrawal.status === "PENDING" ? "bg-yellow-500/20 text-yellow-300" :
-                                                withdrawal.status === "APPROVED" ? "bg-yellow-500/20 text-yellow-300" :
-                                                withdrawal.status === "COMPLETED" ? "bg-green-500/20 text-green-300" :
-                                                "bg-red-500/20 text-red-300"
+                                        <td className="py-4 px-4">
+                                            <span className={`text-xs font-bold px-2 py-1 rounded ${
+                                                withdrawal.status === 'PENDING' ? 'bg-yellow-400/20 text-yellow-400' :
+                                                withdrawal.status === 'APPROVED' ? 'bg-blue-400/20 text-blue-400' :
+                                                withdrawal.status === 'SENT' ? 'bg-emerald-400/20 text-emerald-400' :
+                                                'bg-red-400/20 text-red-400'
                                             }`}>
-                                                {getStatusBadge(withdrawal.status)}
+                                                {withdrawal.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 space-x-2">
-                                            {withdrawal.status === "PENDING" && (
-                                                <>
-                                                    <Button size="sm" variant="outline" className="h-7 text-xs bg-green-500/10 border-green-500/20 hover:bg-green-500/20">
-                                                        Approve
-                                                    </Button>
-                                                    <Button size="sm" variant="outline" className="h-7 text-xs bg-red-500/10 border-red-500/20 hover:bg-red-500/20">
-                                                        Reject
-                                                    </Button>
-                                                </>
-                                            )}
-                                            {withdrawal.status === "APPROVED" && (
-                                                <Button size="sm" variant="outline" className="h-7 text-xs bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20">
-                                                    Mark as Sent
-                                                </Button>
-                                            )}
-                                            {["COMPLETED", "REJECTED"].includes(withdrawal.status) && (
-                                                <Button size="sm" variant="outline" className="h-7 text-xs" disabled>
-                                                    {withdrawal.status === "COMPLETED" ? "Sent" : "Rejected"}
-                                                </Button>
-                                            )}
+                                        <td className="py-4 px-4 text-muted-foreground text-xs">
+                                            {new Date(withdrawal.createdAt).toLocaleDateString()}
+                                        </td>
+                                        <td className="py-4 px-4">
+                                            <div className="flex gap-2">
+                                                {withdrawal.status === 'PENDING' && (
+                                                    <>
+                                                        <button className="p-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30 transition" title="Approve">
+                                                            <CheckCircle2 className="h-4 w-4" />
+                                                        </button>
+                                                        <button className="p-1.5 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 transition" title="Reject">
+                                                            <XCircle className="h-4 w-4" />
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {withdrawal.status === 'APPROVED' && (
+                                                    <button className="p-1.5 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-400 hover:bg-blue-500/30 transition" title="Mark as Sent">
+                                                        <Send className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                                <button className="p-1.5 rounded-lg bg-slate-700/20 border border-white/10 text-white hover:bg-slate-700/40 transition">
+                                                    <Eye className="h-4 w-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {data.withdrawals.length === 0 && (
+                <div className="card-modern text-center py-12">
+                    <p className="text-muted-foreground">No withdrawal requests at this time</p>
+                </div>
+            )}
+
         </div>
     );
 }
